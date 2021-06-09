@@ -47,6 +47,7 @@ main() {
     i=0
     while true; do
         printf '\033[1;1H' #cursor position 1,1
+        ! is_terminal && printf '%s\n' "Warning: stdin isn't a terminal, defaulting to 30x80"
         frame $i $min_row $max_row $use_colors
         delay 1
         i=$(((i + 1) % 12))
@@ -145,12 +146,17 @@ should_show_colors() {
 }
 
 check_screen_size() {
+    if ! is_terminal ; then
+        LINES=30
+        COLUMNS=80
+        return
+    fi
     if [ -z "$COLUMNS" ]; then
         _size=""
         # stty may fail with 'stty: standard input' if we are too quick (docker)
         _try=0
         while [ $((_try += 1)) -lt 9 ]; do
-            _s="$(stty size 2>/dev/null)"
+            _s="$(stty size 2>/dev/null || true)"
             case "$_s" in
                 *[!0-9\ ]*) ;;  # Only digits and space
                 *\ *\ *) ;;     # Just one space
@@ -159,28 +165,37 @@ check_screen_size() {
             delay 1
         done
         if [ -z "$_size" ]; then
-            _size=$(stty size)
+            _size=$(stty size || true)
         fi
         COLUMNS=${_size#* }
         LINES=${_size% *}
     fi
     if ! is_number "$COLUMNS"; then
         printf "Unable to detect window width %s\n" "$COLUMNS" >&2
-        quit 1
+        LINES=30
+        COLUMNS=80
     fi
 }
 
 save_tty_settings() {
-    saved_tty_settings="$(stty -g)"
+    saved_tty_settings="$(stty -g 2>/dev/null || true)"
 }
 
 restore_tty_settings() {
-    [ -n "$saved_tty_settings" ] && stty "$saved_tty_settings"
+    [ -n "$saved_tty_settings" ] && stty "$saved_tty_settings" || true
 }
 
 delay() {
-    stty -icanon -echo min 0 time "$1"
-    dd bs=1 count=1 2>/dev/null
+    if stty -icanon -echo min 0 time "$1"
+    then
+        dd bs=1 count=1
+    else
+        sleep 0.1 || sleep 1
+    fi 2>/dev/null
+}
+
+is_terminal() {
+    [ -t 0 ]
 }
 
 is_number() {
