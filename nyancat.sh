@@ -43,14 +43,19 @@ main() {
         min_row=$(((frame_height - (LINES-1)) / 2))
         max_row=$(((frame_height + (LINES-1)) / 2))
     fi
+    set --
+    i=0; while [ $i -lt 12 ]; do
+        set -- "$@" "$(frame $i $min_row $max_row $use_colors)"
+        i=$((i + 1))
+    done
     printf '\033[H\033J' #clear
-    i=0
     while true; do
-        printf '\033[1;1H' #cursor position 1,1
-        ! is_terminal && printf '%s\n' "Warning: stdin isn't a terminal, defaulting to 30x80"
-        frame $i $min_row $max_row $use_colors
-        delay 1
-        i=$(((i + 1) % 12))
+        for frame; do
+            printf '\033[1;1H' #cursor position 1,1
+            ! is_terminal && printf '%s\n' "Warning: stdin isn't a terminal, defaulting to 30x80"
+            printf %s "$frame"
+            delay 1
+        done
     done
     quit
 }
@@ -131,7 +136,7 @@ ccut() {
 
 quit() {
     restore_tty_settings
-    exit "${1:-0}"
+    exit
 }
 
 should_show_colors() {
