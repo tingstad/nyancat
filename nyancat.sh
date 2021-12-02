@@ -80,7 +80,7 @@ colorize() {
         # Black border
         gsub(apos, esc "[40m")
         # Tan poptart
-        gsub("@", esc "\[47m")
+        gsub("@", esc "[47m")
         # Pink poptart
         gsub("S", esc "[105m")
         # Red poptart
