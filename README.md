@@ -10,3 +10,8 @@ or:
 ```
 docker run -t --rm alpine sh -c "$(curl https://raw.githubusercontent.com/tingstad/nyancat/master/nyancat.sh)"
 ```
+
+<p align="center">
+  <img width="600" src="nyancat.svg">
+</p>
+
